@@ -22,6 +22,7 @@ import {
 	AlertTriangle,
 	RefreshCw,
 } from "lucide-react";
+import { parseSuggestedPrice, formatPrice } from "@/lib/formatters";
 
 export default function EditCatalogPage() {
 	const [products, setProducts] = useState<Product[]>([]);
@@ -157,8 +158,20 @@ export default function EditCatalogPage() {
 				throw new Error(data.error || "Error al subir las imágenes.");
 			}
 
-			// Actualizar productos en pantalla con la respuesta del servidor
-			setProducts(data.products);
+			// Actualizar productos manteniendo las ediciones de texto pendientes del usuario
+			const currentProductsMap = new Map(products.map((p) => [p.id, p]));
+			const mergedProducts = data.products.map((serverProd: Product) => {
+				const localProd = currentProductsMap.get(serverProd.id);
+				if (!localProd) return serverProd;
+				return {
+					...serverProd,
+					title: localProd.title,
+					suggestedPrice: localProd.suggestedPrice,
+					observation: localProd.observation,
+				};
+			});
+
+			setProducts(mergedProducts);
 			setInitialProducts(JSON.parse(JSON.stringify(data.products)));
 
 			setMessage({
@@ -199,7 +212,22 @@ export default function EditCatalogPage() {
 				throw new Error(data.error || "Error al eliminar el producto.");
 			}
 
-			setProducts(data.products);
+			// Mantener las ediciones de texto no guardadas del usuario en los demás productos
+			const currentProductsMap = new Map(
+				products.filter((p) => p.id !== productToDelete.id).map((p) => [p.id, p])
+			);
+			const mergedProducts = data.products.map((serverProd: Product) => {
+				const localProd = currentProductsMap.get(serverProd.id);
+				if (!localProd) return serverProd;
+				return {
+					...serverProd,
+					title: localProd.title,
+					suggestedPrice: localProd.suggestedPrice,
+					observation: localProd.observation,
+				};
+			});
+
+			setProducts(mergedProducts);
 			setInitialProducts(JSON.parse(JSON.stringify(data.products)));
 			setMessage({
 				type: "success",
@@ -247,7 +275,20 @@ export default function EditCatalogPage() {
 				throw new Error(data.error || "Error al eliminar la imagen.");
 			}
 
-			setProducts(data.products);
+			// Mantener las ediciones de texto no guardadas del usuario
+			const currentProductsMap = new Map(products.map((p) => [p.id, p]));
+			const mergedProducts = data.products.map((serverProd: Product) => {
+				const localProd = currentProductsMap.get(serverProd.id);
+				if (!localProd) return serverProd;
+				return {
+					...serverProd,
+					title: localProd.title,
+					suggestedPrice: localProd.suggestedPrice,
+					observation: localProd.observation,
+				};
+			});
+
+			setProducts(mergedProducts);
 			setInitialProducts(JSON.parse(JSON.stringify(data.products)));
 			setMessage({
 				type: "success",
@@ -282,6 +323,16 @@ export default function EditCatalogPage() {
 				(p.observation && p.observation.toLowerCase().includes(q))
 		);
 	}, [products, searchTerm]);
+
+	// Sumatoria del valor sugerido total de los productos
+	const totalSuggestedPrice = useMemo(() => {
+		return products.reduce((acc, p) => acc + parseSuggestedPrice(p.suggestedPrice), 0);
+	}, [products]);
+
+	// Sumatoria del valor sugerido de los productos filtrados
+	const filteredSuggestedPrice = useMemo(() => {
+		return filteredProducts.reduce((acc, p) => acc + parseSuggestedPrice(p.suggestedPrice), 0);
+	}, [filteredProducts]);
 
 	return (
 		<div className="space-y-6 pb-20">
@@ -325,8 +376,16 @@ export default function EditCatalogPage() {
 						<h1 className="text-lg font-bold text-slate-900 leading-tight">
 							Gestor de Catálogo
 						</h1>
-						<p className="text-xs text-slate-500">
-							{products.length} productos registrados &bull;{" "}
+						<p className="text-xs text-slate-500 flex flex-wrap items-center gap-1.5">
+							<span>{products.length} productos registrados</span>
+							<span>&bull;</span>
+							<span>
+								Total sugerido:{" "}
+								<strong className="text-emerald-700 font-semibold">
+									{formatPrice(totalSuggestedPrice)}
+								</strong>
+							</span>
+							<span>&bull;</span>
 							{hasUnsavedChanges ? (
 								<span className="text-amber-600 font-semibold">Cambios sin guardar</span>
 							) : (
@@ -469,9 +528,18 @@ export default function EditCatalogPage() {
 						className="w-full pl-9 pr-4 py-1.5 text-sm rounded-lg border border-transparent focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
 					/>
 				</div>
-				<span className="text-xs text-slate-500 px-2">
-					{filteredProducts.length} de {products.length}
-				</span>
+				<div className="flex items-center gap-2 text-xs text-slate-500 px-2 flex-shrink-0">
+					<span>
+						{filteredProducts.length} de {products.length} productos
+					</span>
+					<span>•</span>
+					<span>
+						Total:{" "}
+						<strong className="text-emerald-700 font-semibold">
+							{formatPrice(filteredSuggestedPrice)}
+						</strong>
+					</span>
+				</div>
 			</div>
 
 			{/* Loading Skeleton */}
