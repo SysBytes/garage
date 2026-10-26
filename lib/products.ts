@@ -18,7 +18,10 @@ const IMAGE_EXTENSION_REGEX = /\.(jpe?g|png|webp|avif|gif)$/i;
  */
 export function extractProductBaseId(fileName: string): string {
 	const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-	return nameWithoutExt.replace(/[-_]\d+$/, "");
+	return nameWithoutExt
+		.replace(/[-_\s]+\d+$/, "")
+		.replace(/[-_\s]+$/, "")
+		.trim();
 }
 
 /**
@@ -27,7 +30,8 @@ export function extractProductBaseId(fileName: string): string {
  */
 export function formatDefaultTitle(id: string): string {
 	return id
-		.split(/[-_]+/)
+		.split(/[-_\s]+/)
+		.filter(Boolean)
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 		.join(" ");
 }
