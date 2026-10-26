@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Product } from "@/types/product";
+import sharp from "sharp";
 
 const PRODUCTS_DIR = path.join(process.cwd(), "public", "products");
 const DATA_FILE_PATH = path.join(process.cwd(), "data.json");
@@ -268,7 +269,17 @@ export async function saveUploadedFiles(
 			counter++;
 		}
 
-		await fs.promises.writeFile(targetPath, file.buffer);
+		let finalBuffer = file.buffer;
+		try {
+			finalBuffer = await sharp(file.buffer)
+				.rotate()
+				.resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
+				.toBuffer();
+		} catch (sharpError) {
+			console.warn("Could not optimize image with sharp, using original buffer:", sharpError);
+		}
+
+		await fs.promises.writeFile(targetPath, finalBuffer);
 		uploadedFilenames.push(finalName);
 	}
 
