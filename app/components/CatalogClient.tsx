@@ -16,7 +16,10 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	ZoomIn,
+	Package,
+	CircleDollarSign,
 } from "lucide-react";
+import { parseSuggestedPrice, formatPrice } from "@/lib/formatters";
 
 interface LightboxState {
 	productId: string;
@@ -71,6 +74,16 @@ export default function CatalogClient({ initialProducts }: CatalogClientProps) {
 				(p.observation && p.observation.toLowerCase().includes(q))
 		);
 	}, [products, searchTerm]);
+
+	// Sumatoria del valor sugerido total del catálogo
+	const totalSuggestedPrice = useMemo(() => {
+		return products.reduce((acc, p) => acc + parseSuggestedPrice(p.suggestedPrice), 0);
+	}, [products]);
+
+	// Sumatoria del valor sugerido de los productos filtrados actualmente
+	const filteredSuggestedPrice = useMemo(() => {
+		return filteredProducts.reduce((acc, p) => acc + parseSuggestedPrice(p.suggestedPrice), 0);
+	}, [filteredProducts]);
 
 	const handleSelectThumbnail = (productId: string, index: number) => {
 		setSelectedImageMap((prev) => ({ ...prev, [productId]: index }));
@@ -143,7 +156,7 @@ export default function CatalogClient({ initialProducts }: CatalogClientProps) {
 			{/* Hero & Top Controls */}
 			<section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
 				<div className="absolute -right-10 -bottom-10 w-72 h-72 bg-orange-600/20 rounded-full blur-3xl pointer-events-none" />
-				<div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+				<div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 					<div className="space-y-2">
 						<h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
 							Equipamiento de Paintball
@@ -151,6 +164,44 @@ export default function CatalogClient({ initialProducts }: CatalogClientProps) {
 						<p className="text-slate-300 text-sm sm:text-base max-w-2xl">
 							Explora los productos disponibles en nuestro catálogo de ocasión.
 						</p>
+					</div>
+
+					{/* Resumen de Métricas */}
+					<div className="grid grid-cols-2 gap-3 sm:gap-4 flex-shrink-0">
+						{/* Cantidad de Productos */}
+						<div className="bg-slate-800/80 backdrop-blur-md border border-slate-700/80 rounded-2xl p-3.5 sm:p-4 flex items-center gap-3 shadow-lg">
+							<div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center flex-shrink-0 border border-orange-500/30">
+								<Package className="w-5 h-5" />
+							</div>
+							<div>
+								<div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">
+									Total Productos
+								</div>
+								<div className="text-lg sm:text-xl font-extrabold text-white">
+									{searchTerm ? filteredProducts.length : products.length}
+									{searchTerm && filteredProducts.length !== products.length && (
+										<span className="text-xs font-normal text-slate-400 ml-1">
+											de {products.length}
+										</span>
+									)}
+								</div>
+							</div>
+						</div>
+
+						{/* Costo Total Sugerido */}
+						<div className="bg-slate-800/80 backdrop-blur-md border border-slate-700/80 rounded-2xl p-3.5 sm:p-4 flex items-center gap-3 shadow-lg">
+							<div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 border border-emerald-500/30">
+								<CircleDollarSign className="w-5 h-5" />
+							</div>
+							<div>
+								<div className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-slate-400">
+									Valor Total
+								</div>
+								<div className="text-lg sm:text-xl font-extrabold text-emerald-400">
+									{formatPrice(searchTerm ? filteredSuggestedPrice : totalSuggestedPrice)}
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -167,11 +218,20 @@ export default function CatalogClient({ initialProducts }: CatalogClientProps) {
 						/>
 					</div>
 
-					<div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end text-xs text-slate-400">
-						<span>
-							Mostrando <strong className="text-white">{filteredProducts.length}</strong> de{" "}
-							<strong className="text-white">{products.length}</strong> artículos
-						</span>
+					<div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end text-xs text-slate-400">
+						<div className="flex items-center gap-2">
+							<span>
+								Mostrando <strong className="text-white">{filteredProducts.length}</strong> de{" "}
+								<strong className="text-white">{products.length}</strong> artículos
+							</span>
+							<span className="text-slate-600 hidden sm:inline">•</span>
+							<span className="hidden sm:inline">
+								Valor sugerido:{" "}
+								<strong className="text-emerald-400 font-semibold">
+									{formatPrice(filteredSuggestedPrice)}
+								</strong>
+							</span>
+						</div>
 						<button
 							onClick={fetchProducts}
 							disabled={loading}
