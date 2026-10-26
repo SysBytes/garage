@@ -435,9 +435,7 @@ export default function CatalogClient({ initialProducts }: CatalogClientProps) {
 											<Tag className="w-4 h-4 text-orange-500" />
 											{product.suggestedPrice ? (
 												<span>
-													{typeof product.suggestedPrice === "number"
-														? `$ ${product.suggestedPrice.toLocaleString()}`
-														: `$ ${product.suggestedPrice}`}
+													{formatPrice(parseSuggestedPrice(product.suggestedPrice))}
 												</span>
 											) : (
 												<span className="text-xs font-medium text-slate-400 italic">
