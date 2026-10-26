@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Compass } from "lucide-react";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
 	title: "MercadoPaintball Garage | Catálogo de Productos",
