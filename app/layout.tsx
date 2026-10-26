@@ -10,6 +10,11 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
 	title: "MercadoPaintball Garage | Catálogo de Productos",
 	description: "Catálogo ligero y gestor de equipamiento de paintball.",
+	icons: {
+		icon: "/favicon.png",
+		shortcut: "/favicon.png",
+		apple: "/favicon.png",
+	},
 };
 
 export default function RootLayout({
